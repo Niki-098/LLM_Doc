@@ -1,3 +1,4 @@
+from click import prompt
 import streamlit as st
 from PyPDF2 import PdfReader
 from docx import Document  # DOCX reader
@@ -17,6 +18,9 @@ from dotenv import load_dotenv
 load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
+
+
+    
 # Function to extract text from PDF
 def extract_text_from_pdf(pdf_docs):
     text = ""
@@ -80,8 +84,19 @@ def user_input(user_question):
     response = chain({"input_documents": docs, "question": user_question}, return_only_outputs=True)
     st.write("Reply: ", response["output_text"])
 
+def summarize_text(text):
+    model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.5)
+    prompt = f"Summarize the following text:\n\n{text[:1000]}" 
+    response = model.predict(prompt)
+    print(f"Model Response: {response}")  
+    if isinstance(response, str):
+        return response
+    else:
+        return response.get("text", "No summary available.")
+
 # Main application
 def main():
+    print("Done")
     st.set_page_config("Chat with Documents")
     st.header("Chat with Your Documents (PDF, DOCX, PPTX)")
 
@@ -103,8 +118,12 @@ def main():
                 raw_text = ""
 
                 # Process PDF Files
-                if pdf_docs:
+                if pdf_docs: 
                     raw_text += extract_text_from_pdf(pdf_docs)
+                    summary = summarize_text(raw_text)
+                    st.success("PDF Summary:")
+                    st.write(summary)
+                   
 
                 # Process DOCX Files
                 if docx_docs:
